@@ -18,13 +18,22 @@ def compute_hash_hex(coin_blob):
 def hash_starts_with_n_zeros(hash, n):
     return hash[0:n] == ('0' * n)
 
-begin = datetime.now()
-while True:
-    coin_blob = ''.join(random.choices(string.ascii_letters + string.digits, k=50))
-    hexhash = compute_hash_hex(coin_blob)
-    if hash_starts_with_n_zeros(hexhash, 4):
-        print(f"Miner id: {id_of_miner}")
-        print(base64.b64encode(bytes(coin_blob, 'ascii')))
-        end = datetime.now()
-        print(f"Begin: {begin} End: {end} Length: {end - begin}")
-        break
+def mine_with_n_zeros(n):
+    begin = datetime.now()
+    while True:
+        coin_blob = ''.join(random.choices(string.ascii_letters + string.digits, k=50))
+        hexhash = compute_hash_hex(coin_blob)
+        if hash_starts_with_n_zeros(hexhash, n):
+            print(f"Miner id: {id_of_miner}")
+            print(base64.b64encode(bytes(coin_blob, 'ascii')))
+            end = datetime.now()
+            return end - begin
+
+print("n=4")
+print(mine_with_n_zeros(4))
+print("n=5")
+print(mine_with_n_zeros(5))
+print("n=6")
+print(mine_with_n_zeros(6))
+print("n=7")
+print(mine_with_n_zeros(7))
