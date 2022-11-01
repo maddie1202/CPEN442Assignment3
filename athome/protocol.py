@@ -2,6 +2,7 @@ from enum import IntEnum
 import json
 import crypto_algorithms as crypto
 import math
+from typing import Tuple
 
 CLIENT = "CLIENT"
 SERVER = "SERVER"
@@ -40,14 +41,9 @@ class Protocol:
     # Creating the initial message of your protocol (to be send to the other party to bootstrap the protocol)
     # TODO: IMPLEMENT THE LOGIC (MODIFY THE INPUT ARGUMENTS AS YOU SEEM FIT)
     def GetInitMessage(self):
-        g = crypto.get_g()
-        p = crypto.get_p()
-        dh_value = math.pow(g, self.dhExponent()) % p
-
         return json.dumps({
             "messageType": int(MessageType.INIT),
-            "challengeNonce": self.challengeNonce,
-            "encrypted": crypto.encrypt(str(dh_value), self.sharedSecret)
+            "challengeNonce": self.challengeNonce
         })
 
     def GetInitResponseMessage(self, client_challenge_nonce: int):
@@ -68,15 +64,32 @@ class Protocol:
         })
 
     def GetInitConfirmationMessage(self, server_challenge_nonce: int):
+        g = crypto.get_g()
+        p = crypto.get_p()
+        dh_value = math.pow(g, self.dhExponent()) % p
+
         plaintext = json.dumps({
             "name": CLIENT,
             "clientChallengeNonce": server_challenge_nonce,
+            "dhValue": dh_value
         })
 
         return json.dumps({
             "messageType": int(MessageType.INIT_CONFIRMATION),
             "encrypted": crypto.encrypt(str(plaintext), self.sharedSecret)
         })
+
+    # Return challenge nonce
+    def ProcessInitMessage(self, message) -> str:
+        return ""
+
+    # Return (challenge nonce, dh value)
+    def ProcessInitResponseMessage(self, message) -> Tuple[str, int]:
+        return ("", 0)
+
+    # Return dh value
+    def ProcessInitResponseMessage(self, message) -> int:
+        return 0
 
     def SentInitializationMessage(self):
         assert(self.state == State.WAITING)
