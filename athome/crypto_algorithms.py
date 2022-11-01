@@ -6,11 +6,11 @@ from Crypto.Cipher import AES
 
 def get_p():
     s = open('diffiehellman/p.txt').read()
-    return int.from_bytes(bytes.fromhex(s), byteorder='big')
+    return int_from_bytes(bytes.fromhex(s))
 
 def get_g():
     s = open('diffiehellman/g.txt').read()
-    return int.from_bytes(bytes.fromhex(s), byteorder='big')
+    return int_from_bytes(bytes.fromhex(s))
 
 def from_b64str(s):
     return b64decode(s.encode())
@@ -22,18 +22,24 @@ def to_b64str(b):
 def hash(key):
     return hashlib.sha256(key).digest()
 
-def hash_str(s):
+def hash_str(s) -> bytes:
     return hash(str.encode(s))
 
-def generate_nonce() -> bytes:
-    return secrets.token_bytes(16)
+def generate_nonce(n_bytes) -> bytes:
+    return secrets.token_bytes(n_bytes)
 
 # returns a base64 string
-def generate_nonce_str() -> str:
-    return to_b64str(generate_nonce())
+def generate_nonce_str(n_bytes) -> str:
+    return to_b64str(generate_nonce(n_bytes))
 
-def generate_nonce_int() -> int:
-    return int.from_bytes(generate_nonce(), byteorder='big')
+def generate_nonce_int(n_bytes) -> int:
+    return int.from_bytes(generate_nonce(n_bytes), byteorder='big')
+
+def int_to_bytes(x: int) -> bytes:
+    return x.to_bytes((x.bit_length() + 7) // 8, 'big')
+    
+def int_from_bytes(xbytes: bytes) -> int:
+    return int.from_bytes(xbytes, 'big')
 
 def encrypt(plaintext: str , key: bytes):
     assert(key != None and key != b'')

@@ -9,7 +9,7 @@ from tkinter import messagebox
 
 # local import from "protocol.py"
 from protocol import Protocol
-
+from protocol import MessageType
 
 class Assignment3VPN:
     # Constructor
@@ -78,6 +78,9 @@ class Assignment3VPN:
 
     # Create a TCP connection between the client and the server
     def CreateConnection(self):
+        # self.sharedSecret['state'] = 'disabled' 
+        self.prtcl.SetSharedSecret(self.sharedSecret.get())
+
         # Change button states
         self._ChangeConnectionMode()
         
@@ -124,6 +127,7 @@ class Assignment3VPN:
             # Accepting the connection
             self._AppendLog("SERVER: Waiting for connections...")
             self.conn, self.addr = self.s.accept()
+            self.prtcl.SetConnection(self.conn)
             self._AppendLog("SERVER: Received connection from {}. You can now send/receive messages".format(self.addr))
             
             # Starting receiver thread
@@ -155,15 +159,21 @@ class Assignment3VPN:
                     # Disabling the button to prevent repeated clicks
                     self.secureButton["state"] = "disabled"
                     # Processing the protocol message
-                    self.prtcl.ProcessReceivedProtocolMessage(cipher_text)
+                    messageType = self.prtcl.ProcessReceivedProtocolMessage(cipher_text)
+
+                    if messageType == MessageType.INIT:
+                        self._AppendLog("Securing connection...")
+                    elif messageType == MessageType.INIT_RESPONSE or messageType == MessageType.INIT_CONFIRMATION:
+                        self._AppendLog("Connection secured")
 
                 # Otherwise, decrypting and showing the messaage
                 else:
                     plain_text = self.prtcl.DecryptAndVerifyMessage(cipher_text)
-                    self._AppendMessage("Other: {}".format(plain_text.decode()))
+                    self._AppendMessage("Other: {}".format(plain_text))
                     
             except Exception as e:
                 self._AppendLog("RECEIVER_THREAD: Error receiving data: {}".format(str(e)))
+                raise e # TODO: remove this
                 return False
 
 
@@ -176,14 +186,13 @@ class Assignment3VPN:
 
     # Secure connection with mutual authentication and key establishment
     def SecureConnection(self):
+        self._AppendLog("CLIENT: Securing connection...")
         # disable the button to prevent repeated clicks
         self.secureButton["state"] = "disabled"
-        
-        self.prtcl.SetSharedSecret(self.sharedSecret.get())
 
         # TODO: THIS IS WHERE YOU SHOULD IMPLEMENT THE START OF YOUR MUTUAL AUTHENTICATION AND KEY ESTABLISHMENT PROTOCOL, MODIFY AS YOU SEEM FIT
         init_message = self.prtcl.GetInitMessage()
-        self._SendMessage(init_message)
+        self.conn.send(init_message.encode())
         self.prtcl.SentInitializationMessage()
 
 
