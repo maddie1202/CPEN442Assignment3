@@ -4,6 +4,14 @@ import hashlib
 import json
 from Crypto.Cipher import AES
 
+def get_p():
+    s = open('diffiehellman/p.txt').read()
+    return int.from_bytes(bytes.fromhex(s), byteorder='big')
+
+def get_g():
+    s = open('diffiehellman/g.txt').read()
+    return int.from_bytes(bytes.fromhex(s), byteorder='big')
+
 def from_b64str(s):
     return b64decode(s.encode())
 
@@ -14,11 +22,21 @@ def to_b64str(b):
 def hash(key):
     return hashlib.sha256(key).digest()
 
-# returns a base64 string
-def generate_nonce():
-    return to_b64str(secrets.token_bytes(16))
+def hash_str(s):
+    return hash(str.encode(s))
 
-def encrypt(plaintext, key):
+def generate_nonce() -> bytes:
+    return secrets.token_bytes(16)
+
+# returns a base64 string
+def generate_nonce_str() -> str:
+    return to_b64str(generate_nonce())
+
+def generate_nonce_int() -> int:
+    return int.from_bytes(generate_nonce(), byteorder='big')
+
+def encrypt(plaintext: str , key: bytes):
+    assert(key != None and key != b'')
     plaintext_bytes = str.encode(plaintext, 'utf-16')
     cipher = AES.new(key, AES.MODE_EAX)
     ciphertext, tag = cipher.encrypt_and_digest(plaintext_bytes)
@@ -34,7 +52,7 @@ def decrypt(encrypted_json, key):
 
 def encrypted_to_json(ciphertext, tag, nonce):
     return json.dumps({
-        'ciphertext': to_b64str(ciphertext), 
+        'ciphertext': to_b64str(ciphertext),    
         'tag': to_b64str(tag),
         'nonce': to_b64str(nonce)})
 
