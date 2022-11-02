@@ -173,7 +173,6 @@ class Assignment3VPN:
                     
             except Exception as e:
                 self._AppendLog("RECEIVER_THREAD: Error receiving data: {}".format(str(e)))
-                raise e # TODO: remove this
                 return False
 
 
