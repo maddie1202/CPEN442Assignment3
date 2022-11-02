@@ -53,38 +53,16 @@ class Protocol:
         p = crypto.get_p()
         return (g ** self.dhExponent) % p
 
-    def GetMessageWithHash(self, message: str, messageType: MessageType) -> str:
-        return json.dumps({
-            M_MESSAGE_TYPE: int(messageType),
-            M_MESSAGE: message,
-            M_MESSAGE_HASH: self.GenerateMessageHMAC(message)
-        })
-
-    def ProcessMessageWithHash(self, message_with_hash: str) -> Tuple[str, int]:
-        message_with_hash_json = json.loads(message_with_hash)
-        assert(M_MESSAGE_TYPE in message_with_hash_json)
-        assert(M_MESSAGE in message_with_hash_json)
-        assert(M_MESSAGE_HASH in message_with_hash_json)
-
-        message = message_with_hash_json[M_MESSAGE]
-        expected_hmac = message_with_hash_json[M_MESSAGE_HASH]
-        assert(type(message) is str)
-        assert(type(expected_hmac) is str)
-
-        actual_hmac = self.GenerateMessageHMAC(message)
-        assert(crypto.compare_hmac(expected_hmac, actual_hmac))
-
-        return (message, message_with_hash_json[M_MESSAGE_TYPE])
-
     def GenerateMessageHMAC(self, message: str) -> str:
         assert(self.sharedSecret != None and self.sharedSecret != "")
         return crypto.generate_hmac(message.encode(), self.sharedSecret)
 
     # Creating the initial message of your protocol (to be send to the other party to bootstrap the protocol)
     def GetInitMessage(self):
-        return self.GetMessageWithHash(json.dumps({
+        return json.dumps({
+            M_MESSAGE_TYPE: MessageType.INIT,
             M_CHALLENGE_NONCE_A: self.challengeNonce
-        }), MessageType.INIT)
+        })
 
     def GetInitResponseMessage(self, challenge_nonce_a: str):
         plaintext = json.dumps({
@@ -93,10 +71,11 @@ class Protocol:
             M_DHVALUE: self.GetDHValue()
         })
 
-        return self.GetMessageWithHash(json.dumps({
+        return json.dumps({
+            M_MESSAGE_TYPE: MessageType.INIT_RESPONSE,
             M_CHALLENGE_NONCE_B: self.challengeNonce,
             M_ENCRYPTED: crypto.encrypt(str(plaintext), self.sharedSecret)
-        }), MessageType.INIT_RESPONSE)
+        })
 
     def GetInitConfirmationMessage(self, challenge_nonce_b: str):
         plaintext = json.dumps({
@@ -105,14 +84,16 @@ class Protocol:
             M_DHVALUE: self.GetDHValue()
         })
 
-        return self.GetMessageWithHash(json.dumps({
+        return json.dumps({
+            M_MESSAGE_TYPE: MessageType.INIT_CONFIRMATION,
             M_ENCRYPTED: crypto.encrypt(str(plaintext), self.sharedSecret)
-        }), MessageType.INIT_CONFIRMATION)
+        })
 
     # Return challenge nonce
-    def ProcessInitMessage(self, message_with_hash) -> str:
-        message, messageType = self.ProcessMessageWithHash(message_with_hash)
-        assert(messageType == MessageType.INIT)
+    def ProcessInitMessage(self, message) -> str:
+        json_message = json.loads(message)
+        assert(M_MESSAGE_TYPE in json_message)
+        assert(int(json_message[M_MESSAGE_TYPE]) == MessageType.INIT)
 
         json_message = json.loads(message)
 
@@ -123,10 +104,10 @@ class Protocol:
         return challenge_nonce_a
 
     # Return (challenge nonce, dh value)
-    def ProcessInitResponseMessage(self, message_with_hash) -> Tuple[str, int]:
-        message, messageType = self.ProcessMessageWithHash(message_with_hash)
-        assert(messageType == MessageType.INIT_RESPONSE)
+    def ProcessInitResponseMessage(self, message) -> Tuple[str, int]:
         json_message = json.loads(message)
+        assert(M_MESSAGE_TYPE in json_message)
+        assert(int(json_message[M_MESSAGE_TYPE]) == MessageType.INIT_RESPONSE)
         
         assert(M_CHALLENGE_NONCE_B in json_message)
         assert(M_ENCRYPTED in json_message)
@@ -149,10 +130,10 @@ class Protocol:
             
 
     # Return dh value
-    def ProcessInitConfirmationMessage(self, message_with_hash) -> int:
-        message, messageType = self.ProcessMessageWithHash(message_with_hash)
-        assert(messageType == MessageType.INIT_CONFIRMATION)
+    def ProcessInitConfirmationMessage(self, message) -> int:
         json_message = json.loads(message)
+        assert(M_MESSAGE_TYPE in json_message)
+        assert(int(json_message[M_MESSAGE_TYPE]) == MessageType.INIT_CONFIRMATION)
 
         assert(M_ENCRYPTED in json_message)
         assert(type(json_message[M_ENCRYPTED]) is str)
@@ -205,7 +186,7 @@ class Protocol:
             self.state = State.KEY_ESTABLISHED
 
         else:
-            raise "Message type not recognized"
+            raise Exception("Message type not recognized")
 
         return message_type
 
@@ -233,4 +214,4 @@ class Protocol:
 
     def _GetMessageType(_, message):
         message_object = json.loads(message)
-        return message_object[M_MESSAGE_TYPE]
+        return int(message_object[M_MESSAGE_TYPE])
