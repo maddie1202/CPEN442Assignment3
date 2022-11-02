@@ -2,7 +2,6 @@ import secrets
 from base64 import b64decode, b64encode
 import hashlib
 import json
-import hmac
 from Crypto.Cipher import AES
 
 def get_p():
@@ -18,12 +17,6 @@ def from_b64str(s):
 
 def to_b64str(b):
     return b64encode(b).decode()
-
-def generate_hmac(b, key):
-    return to_b64str(hmac.digest(key, b, hashlib.sha256))
-
-def compare_hmac(h1, h2):
-    return hmac.compare_digest(from_b64str(h1), from_b64str(h2))
 
 # key is bytes, returns bytes of length 256
 def hash(key):
