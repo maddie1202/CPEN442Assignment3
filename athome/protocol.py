@@ -4,6 +4,7 @@ from sys import byteorder
 import crypto_algorithms as crypto
 from typing import Tuple
 import secrets
+import hmac
 
 CLIENT = "CLIENT"
 SERVER = "SERVER"
@@ -56,7 +57,7 @@ class Protocol:
         return json.dumps({
             M_MESSAGE_TYPE: int(messageType),
             M_MESSAGE: message,
-            M_MESSAGE_HASH: self.GenerateMessageHash(message)
+            M_MESSAGE_HASH: self.GenerateMessageHMAC(message)
         })
 
     def ProcessMessageWithHash(self, message_with_hash: str) -> Tuple[str, int]:
@@ -66,18 +67,18 @@ class Protocol:
         assert(M_MESSAGE_HASH in message_with_hash_json)
 
         message = message_with_hash_json[M_MESSAGE]
-        expected_hash = message_with_hash_json[M_MESSAGE_HASH]
+        expected_hmac = message_with_hash_json[M_MESSAGE_HASH]
         assert(type(message) is str)
-        assert(type(expected_hash) is str)
+        assert(type(expected_hmac) is str)
 
-        actual_hash = self.GenerateMessageHash(message)
-        assert(expected_hash == actual_hash)
+        actual_hmac = self.GenerateMessageHMAC(message)
+        assert(crypto.compare_hmac(expected_hmac, actual_hmac))
 
         return (message, message_with_hash_json[M_MESSAGE_TYPE])
 
-    def GenerateMessageHash(self, message: str) -> str:
+    def GenerateMessageHMAC(self, message: str) -> str:
         assert(self.sharedSecret != None and self.sharedSecret != "")
-        return crypto.to_b64str(crypto.hash(message.encode() + self.sharedSecret))
+        return crypto.generate_hmac(message.encode(), self.sharedSecret)
 
     # Creating the initial message of your protocol (to be send to the other party to bootstrap the protocol)
     def GetInitMessage(self):
