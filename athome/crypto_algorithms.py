@@ -46,12 +46,10 @@ def encrypt(plaintext: str , key: bytes):
     plaintext_bytes = str.encode(plaintext, 'utf-16')
     cipher = AES.new(key, AES.MODE_EAX)
     ciphertext, tag = cipher.encrypt_and_digest(plaintext_bytes)
-    print(ciphertext)
     return encrypted_to_json(ciphertext, tag, cipher.nonce)
 
 def decrypt(encrypted_json, key):
     ciphertext, tag, nonce = encrypted_from_json(encrypted_json)
-    print(ciphertext)
     cipher = AES.new(key, AES.MODE_EAX, nonce=nonce)
     plaintext_bytes = cipher.decrypt_and_verify(ciphertext, tag)
     return plaintext_bytes.decode('utf-16')
