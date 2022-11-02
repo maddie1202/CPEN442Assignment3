@@ -154,7 +154,6 @@ class Assignment3VPN:
                     break
 
                 # Checking if the received message is part of your protocol
-                # TODO: MODIFY THE INPUT ARGUMENTS AND LOGIC IF NECESSARY
                 if self.prtcl.IsMessagePartOfProtocol(cipher_text):
                     # Disabling the button to prevent repeated clicks
                     self.secureButton["state"] = "disabled"
@@ -189,7 +188,6 @@ class Assignment3VPN:
         # disable the button to prevent repeated clicks
         self.secureButton["state"] = "disabled"
 
-        # TODO: THIS IS WHERE YOU SHOULD IMPLEMENT THE START OF YOUR MUTUAL AUTHENTICATION AND KEY ESTABLISHMENT PROTOCOL, MODIFY AS YOU SEEM FIT
         init_message = self.prtcl.GetInitMessage()
         self.conn.send(init_message.encode())
         self.prtcl.SentInitializationMessage()

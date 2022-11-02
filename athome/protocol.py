@@ -31,7 +31,6 @@ class MessageType(IntEnum):
 
 class Protocol:
     # Initializer (Called from app.py)
-    # TODO: MODIFY ARGUMENTS AND LOGIC AS YOU SEEM FIT
     def __init__(self):
         self.key = None
         self.conn = None
@@ -81,7 +80,6 @@ class Protocol:
         return crypto.to_b64str(crypto.hash(message.encode() + self.sharedSecret))
 
     # Creating the initial message of your protocol (to be send to the other party to bootstrap the protocol)
-    # TODO: IMPLEMENT THE LOGIC (MODIFY THE INPUT ARGUMENTS AS YOU SEEM FIT)
     def GetInitMessage(self):
         return self.GetMessageWithHash(json.dumps({
             M_CHALLENGE_NONCE_A: self.challengeNonce
@@ -179,8 +177,6 @@ class Protocol:
         return self._GetMessageType(message) != MessageType.REGULAR_MESSAGE
 
     # Processing protocol message
-    # TODO: IMPLMENET THE LOGIC (CALL SetSessionKey ONCE YOU HAVE THE KEY ESTABLISHED)
-    # THROW EXCEPTION IF AUTHENTICATION FAILS
     def ProcessReceivedProtocolMessage(self, message):
         message_type = self._GetMessageType(message)
 
@@ -213,14 +209,11 @@ class Protocol:
         return message_type
 
     # Setting the key for the current session
-    # TODO: MODIFY AS YOU SEEM FIT
     def SetSessionKey(self, dh_value):
         key_int = (dh_value ** self.dhExponent) % crypto.get_p()
         self.key = crypto.hash(crypto.int_to_bytes(key_int))
         
     # Encrypting messages
-    # TODO: IMPLEMENT ENCRYPTION WITH THE SESSION KEY (ALSO INCLUDE ANY NECESSARY INFO IN THE ENCRYPTED MESSAGE FOR INTEGRITY PROTECTION)
-    # RETURN AN ERROR MESSAGE IF INTEGRITY VERITIFCATION OR AUTHENTICATION FAILS
     def EncryptAndProtectMessage(self, message):
         return json.dumps({
             M_MESSAGE_TYPE: int(MessageType.REGULAR_MESSAGE),
@@ -228,8 +221,6 @@ class Protocol:
         })
 
     # Decrypting and verifying messages
-    # TODO: IMPLEMENT DECRYPTION AND INTEGRITY CHECK WITH THE SESSION KEY
-    # RETURN AN ERROR MESSAGE IF INTEGRITY VERITIFCATION OR AUTHENTICATION FAILS
     def DecryptAndVerifyMessage(self, message):
         message_json = json.loads(message)
 
